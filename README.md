@@ -36,3 +36,41 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+
+## Prompt Templates
+
+### General Template for Creating or Updating Features
+
+```plaintext
+I want to create or update a ______ (e.g., python script, my app, react component).
+
+For the Frontend, I am using:
+- Next.js with Typescript
+- TailwindCSS
+
+For the Backend, I am using:
+***
+
+
+What I want to do:
+- X
+- Y
+- Z
+
+Here is my file for X:
+- [Link to File X or Description]
+
+Here is my file for Y:
+- [Link to File Y or Description]
+
+Here is my file for Z:
+- [Link to File Z or Description]
+
+For example, I want to do this specific thing:
+
+For this specific aspect, I want you to do X and Y:
+
+Please clarify your understanding of the prompt before writing any code. Provide an outline of updates to be made, and I will approve. You can focus on the (frontend/backend) aspect for now. Let me know if you have any clarifying questions.
+```
+
