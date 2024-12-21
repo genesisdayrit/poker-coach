@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const messages = [
       {
         role: "developer",
-        content: `You are an expert poker coach with decades of experience teaching Texas Hold'em. 
+        content: `You are an expert Texas Hold'Em poker coach with decades of experience teaching Texas Hold'em. 
         You provide clear, concise, and strategic advice based on the current game state and cards shown.
         Focus on explaining:
         1. Hand strength relative to possible opponent hands
