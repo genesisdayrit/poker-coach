@@ -9,6 +9,8 @@ export default function GameTable() {
     flop,
     turn,
     river,
+    currentGameState,
+    getGameStateDescription,
     handleDrawHand,
     handleDrawFlop,
     handleDrawTurn,
@@ -19,24 +21,91 @@ export default function GameTable() {
   const [aiAdvice, setAiAdvice] = useState('');
   const [isAILoading, setIsAILoading] = useState(false);
 
-  const handleGetAIAdvice = () => {
-    setIsAILoading(true);
-    setTimeout(() => {
-      setAiAdvice('Consider the possibilities of a straight or flush...');
-      setIsAILoading(false);
-    }, 2000);
+  // Clear advice on game state changes
+  const handleDrawHandWithReset = () => {
+    setAiAdvice('');
+    setIsAILoading(false);
+    handleDrawHand();
   };
 
-  // Determine the next action based on game state
+  const handleDrawFlopWithReset = () => {
+    setAiAdvice('');
+    setIsAILoading(false);
+    handleDrawFlop();
+  };
+
+  const handleDrawTurnWithReset = () => {
+    setAiAdvice('');
+    setIsAILoading(false);
+    handleDrawTurn();
+  };
+
+  const handleDrawRiverWithReset = () => {
+    setAiAdvice('');
+    setIsAILoading(false);
+    handleDrawRiver();
+  };
+
+  const handleResetGameWithReset = () => {
+    setAiAdvice('');
+    setIsAILoading(false);
+    handleResetGame();
+  };
+
+  const handleGetAIAdvice = async () => {
+    setIsAILoading(true);
+    setAiAdvice('');
+
+    try {
+      const response = await fetch('/api/ai-advice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gameState: currentGameState,
+          playerHand: playerHand.length > 0 ? getGameStateDescription().split('\n')[1] : '',
+          flop: flop.length > 0 ? getGameStateDescription().split('\n')[2] : '',
+          turn: turn.length > 0 ? getGameStateDescription().split('\n')[3] : '',
+          river: river.length > 0 ? getGameStateDescription().split('\n')[4] : '',
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to get advice');
+      if (!response.body) throw new Error('No response body');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let content = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Decode and append the new chunk
+        const chunk = decoder.decode(value);
+        content += chunk;
+        
+        // Update the advice with the accumulated content
+        setAiAdvice(content);
+      }
+    } catch (error) {
+      console.error('Error getting AI advice:', error);
+      setAiAdvice('Sorry, there was an error getting advice. Please try again.');
+    } finally {
+      setIsAILoading(false);
+    }
+  };
+
   const getActionButton = () => {
     if (river.length > 0) {
-      return { label: 'Play New Hand', onClick: handleResetGame };
+      return { label: 'Play New Hand', onClick: handleResetGameWithReset };
     } else if (turn.length > 0) {
-      return { label: 'Draw River', onClick: handleDrawRiver };
+      return { label: 'Draw River', onClick: handleDrawRiverWithReset };
     } else if (flop.length > 0) {
-      return { label: 'Draw Turn', onClick: handleDrawTurn };
+      return { label: 'Draw Turn', onClick: handleDrawTurnWithReset };
     } else {
-      return { label: 'Draw Flop', onClick: handleDrawFlop };
+      return { label: 'Draw Flop', onClick: handleDrawFlopWithReset };
     }
   };
 
@@ -70,7 +139,7 @@ export default function GameTable() {
       <div className="flex gap-4 mt-40 mb-4">
         <button 
           className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-          onClick={handleDrawHand}
+          onClick={handleDrawHandWithReset}
         >
           Draw Hand
         </button>
@@ -83,7 +152,7 @@ export default function GameTable() {
         <button 
           className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
           onClick={handleGetAIAdvice}
-          disabled={!playerHand.length || !flop.length}
+          disabled={!playerHand.length}
         >
           Get AI Advice
         </button>
@@ -92,11 +161,12 @@ export default function GameTable() {
       {/* AI Advice section */}
       {(isAILoading || aiAdvice) && (
         <div className="w-full max-w-md p-4 rounded-lg bg-slate-700 text-white shadow-md">
-          {isAILoading ? (
-            <div className="text-center">Loading...</div>
-          ) : (
-            <div className="text-center">{aiAdvice}</div>
-          )}
+          <div className="text-center">
+            {aiAdvice}
+            {isAILoading && (
+              <span className="inline-block ml-1 animate-pulse">▋</span>
+            )}
+          </div>
         </div>
       )}
     </div>
