@@ -81,7 +81,9 @@ export default function WinProbability({
   if (!probability) {
     return (
       <div className="p-4 rounded-lg bg-slate-700 text-white shadow-md border border-slate-600">
-        <h3 className="text-white font-bold text-sm mb-2">Equity vs Random Opponent</h3>
+        <h3 className="text-white font-bold text-sm mb-2">
+          Equity vs {opponentCount} {opponentCount === 1 ? 'Opponent' : 'Opponents'}
+        </h3>
         <div className="text-gray-400 text-sm">
           {isCalculating ? 'Calculating...' : 'Waiting for cards...'}
         </div>
@@ -104,7 +106,7 @@ export default function WinProbability({
     <div className="p-4 rounded-lg bg-slate-700 text-white shadow-md border border-slate-600">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-white font-bold text-sm">
-          Equity vs Random Opponent
+          Equity vs {opponentCount} {opponentCount === 1 ? 'Opponent' : 'Opponents'}
           {isCalculating && <span className="ml-2 text-xs text-yellow-400 animate-pulse">updating...</span>}
         </h3>
         <span className="text-xs text-gray-400">50 samples</span>

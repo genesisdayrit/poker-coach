@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Types
 type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -23,6 +23,8 @@ interface GameContextType {
   turn: Card[];
   river: Card[];
   currentGameState: GameState;
+  playerCount: number;
+  setPlayerCount: (count: number) => void;
   getGameStateDescription: () => string;
   handleDrawHand: () => void;
   handleDrawFlop: () => void;
@@ -70,6 +72,8 @@ const defaultState: GameContextType = {
   turn: [],
   river: [],
   currentGameState: 'NO_CARDS',
+  playerCount: 2,
+  setPlayerCount: () => {},
   getGameStateDescription: () => '',
   handleDrawHand: () => {},
   handleDrawFlop: () => {},
@@ -102,6 +106,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (river.length === 0) return 'TURN';
     return 'RIVER';
   };
+  
+  // Initialize player count from localStorage
+  const [playerCount, setPlayerCount] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('playerCount');
+      return saved ? parseInt(saved, 10) : 2;
+    }
+    return 2;
+  });
+
+  // Save player count to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playerCount', playerCount.toString());
+    }
+  }, [playerCount]);
+
   const [deck, setDeck] = useState<Card[]>(createDeck());
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
   const [flop, setFlop] = useState<Card[]>([]);
@@ -176,6 +197,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         turn, 
         river,
         currentGameState: determineGameState(playerHand, flop, turn, river),
+        playerCount,
+        setPlayerCount,
         getGameStateDescription, 
         handleDrawHand, 
         handleDrawFlop, 

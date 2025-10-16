@@ -80,8 +80,8 @@ export async function calculateWinProbability(
     throw new Error('Must have exactly 2 hole cards');
   }
 
-  // For now, limit to 1 opponent for performance
-  if (opponentCount !== 1) {
+  // Validate opponent count
+  if (opponentCount < 1 || opponentCount > 8) {
     opponentCount = 1;
   }
 
@@ -95,24 +95,28 @@ export async function calculateWinProbability(
   const availableCards = getRemainingDeck(usedCards);
 
   // Sample opponent hands strategically
-  const opponentHands = sampleOpponentHands(availableCards, samples);
+  const opponentHandSets = sampleMultipleOpponentHands(availableCards, samples, opponentCount);
 
-  // Calculate equity against each sampled opponent hand
+  // Calculate equity against each sampled set of opponent hands
   // Process in batches to avoid blocking UI
   const batchSize = 10;
-  for (let i = 0; i < opponentHands.length; i += batchSize) {
+  for (let i = 0; i < opponentHandSets.length; i += batchSize) {
     // Yield to browser after each batch
     if (i > 0) {
       await new Promise(resolve => setTimeout(resolve, 0));
     }
     
-    const batch = opponentHands.slice(i, i + batchSize);
+    const batch = opponentHandSets.slice(i, i + batchSize);
     
-    for (const opponentHand of batch) {
+    for (const opponentHands of batch) {
       // Create game for this matchup
       const game = new TexasHoldem();
       game.addPlayer(holeCards.map(convertToOddsCalcFormat));
-      game.addPlayer(opponentHand);
+      
+      // Add all opponent hands
+      for (const oppHand of opponentHands) {
+        game.addPlayer(oppHand);
+      }
 
       // Set board if any
       if (communityCards.length > 0) {
@@ -141,11 +145,11 @@ export async function calculateWinProbability(
     }
   }
 
-  // Average across all sampled opponent hands
-  const avgEquity = sumEquity / opponentHands.length;
-  const avgWinPct = sumWinPct / opponentHands.length;
-  const avgTiePct = sumTiePct / opponentHands.length;
-  const avgLossPct = sumLossPct / opponentHands.length;
+  // Average across all sampled scenarios
+  const avgEquity = sumEquity / opponentHandSets.length;
+  const avgWinPct = sumWinPct / opponentHandSets.length;
+  const avgTiePct = sumTiePct / opponentHandSets.length;
+  const avgLossPct = sumLossPct / opponentHandSets.length;
 
   return {
     winPercentage: avgWinPct,
@@ -156,26 +160,34 @@ export async function calculateWinProbability(
 }
 
 /**
- * Sample opponent hands strategically for better representation
- * Uses a mix of random sampling and strategic hand selection
+ * Sample multiple opponent hands for multi-player scenarios
+ * @param availableCards - Cards available to deal
+ * @param sampleCount - Number of different scenarios to sample
+ * @param opponentCount - Number of opponents in each scenario
+ * @returns Array of scenarios, each containing multiple opponent hands
  */
-function sampleOpponentHands(availableCards: string[], count: number): string[][] {
-  const samples: string[][] = [];
-  const allRanks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+function sampleMultipleOpponentHands(
+  availableCards: string[], 
+  sampleCount: number, 
+  opponentCount: number
+): string[][][] {
+  const scenarios: string[][][] = [];
   
-  // Strategy: Sample a diverse range of hands
-  // - Some high pairs (AA, KK, QQ)
-  // - Some medium pairs
-  // - Some suited connectors
-  // - Mostly random hands
-  
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < sampleCount; i++) {
     const shuffled = shuffle([...availableCards]);
-    const hand = shuffled.slice(0, 2);
-    samples.push(hand);
+    const opponentHands: string[][] = [];
+    
+    // Deal cards to each opponent (2 cards each)
+    for (let j = 0; j < opponentCount; j++) {
+      const startIdx = j * 2;
+      const hand = shuffled.slice(startIdx, startIdx + 2);
+      opponentHands.push(hand);
+    }
+    
+    scenarios.push(opponentHands);
   }
   
-  return samples;
+  return scenarios;
 }
 
 /**

@@ -14,6 +14,7 @@ export default function GameTable() {
     turn,
     river,
     currentGameState,
+    playerCount,
     getGameStateDescription,
     handleDrawHand,
     handleDrawFlop,
@@ -188,7 +189,7 @@ export default function GameTable() {
           <WinProbability 
             playerHand={playerHand}
             communityCards={[...flop, ...turn, ...river]}
-            opponentCount={1}
+            opponentCount={playerCount - 1}
           />
           
           {/* AI Advice (always available) */}

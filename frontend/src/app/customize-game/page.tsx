@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useGame } from "@/app/contexts/GameContext";
 
 export default function CustomizeGamePage() {
-  const [numPlayers, setNumPlayers] = useState(2); // Default number of players
+  const { playerCount, setPlayerCount } = useGame();
   const router = useRouter();
 
   const handleStartGame = () => {
-    // Navigate to /game with the number of players
-    router.push(`/game?players=${numPlayers}`);
+    // Navigate to /game (player count is already saved in context)
+    router.push('/game');
   };
 
   return (
@@ -17,18 +17,22 @@ export default function CustomizeGamePage() {
       <h1 className="text-4xl font-bold mb-8">Customize Your Game</h1>
       
       <label htmlFor="numPlayers" className="text-lg mb-4">
-        Number of Players:
+        Number of Players at Table:
       </label>
       
       <input
         id="numPlayers"
         type="number"
         min={2}
-        max={10} // Max players for a typical poker game
-        value={numPlayers}
-        onChange={(e) => setNumPlayers(parseInt(e.target.value, 10))}
-        className="w-16 p-2 text-center text-black rounded-md border border-gray-400"
+        max={9} // Max 9 players for Texas Hold'em
+        value={playerCount}
+        onChange={(e) => setPlayerCount(Math.max(2, Math.min(9, parseInt(e.target.value, 10) || 2)))}
+        className="w-20 p-2 text-center text-black rounded-md border border-gray-400"
       />
+      
+      <p className="text-sm text-gray-400 mt-2">
+        (You vs {playerCount - 1} {playerCount - 1 === 1 ? 'opponent' : 'opponents'})
+      </p>
 
       <button
         onClick={handleStartGame}
