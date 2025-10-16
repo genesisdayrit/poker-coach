@@ -5,6 +5,8 @@ import Card from './Card';
 import GTORecommendation from './GTORecommendation';
 import PostFlopAnalysis from './PostFlopAnalysis';
 import WinProbability from './WinProbability';
+import ThreatAnalysis from './ThreatAnalysis';
+import { evaluateHandStrength } from '../utils/handEvaluator';
 import type { Position } from '../utils/gtoRanges';
 
 export default function GameTable() {
@@ -191,6 +193,24 @@ export default function GameTable() {
             communityCards={[...flop, ...turn, ...river]}
             opponentCount={playerCount - 1}
           />
+
+          {/* Threat Analysis (post-flop only, below win probability) */}
+          {flop.length > 0 && (() => {
+            try {
+              const communityCards = [...flop, ...turn, ...river];
+              const handStrength = evaluateHandStrength(playerHand, communityCards);
+              return (
+                <ThreatAnalysis 
+                  holeCards={playerHand}
+                  communityCards={communityCards}
+                  handStrength={handStrength}
+                />
+              );
+            } catch (error) {
+              console.error('Error in threat analysis:', error);
+              return null;
+            }
+          })()}
           
           {/* AI Advice (always available) */}
           {(isAILoading || aiAdvice) && (
