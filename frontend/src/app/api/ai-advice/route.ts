@@ -16,9 +16,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const messages = [
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       {
-        role: "developer",
+        role: "system",
         content: `You are an expert Texas Hold'Em poker coach with decades of experience teaching Texas Hold'em. 
         You provide clear, concise, and strategic advice based on the current game state and cards shown.
         Focus on explaining:
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       async start(controller) {
         try {
           const openaiStream = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             messages: messages,
             stream: true,
             temperature: 0.7,

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import Card from './Card';
 import GTORecommendation from './GTORecommendation';
+import PostFlopAnalysis from './PostFlopAnalysis';
 import type { Position } from '../utils/gtoRanges';
 
 export default function GameTable() {
@@ -161,18 +162,38 @@ export default function GameTable() {
         </button>
       </div>
 
-      {/* GTO + AI Advice section */}
+      {/* Strategy Advice section */}
       {playerHand.length === 2 && (
         <div className="w-full max-w-2xl space-y-4">
-          {/* GTO Recommendation */}
-          <GTORecommendation 
-            card1={playerHand[0]} 
-            card2={playerHand[1]} 
-            position={selectedPosition}
-            onPositionChange={setSelectedPosition}
-          />
+          {/* Pre-Flop: GTO Recommendation */}
+          {flop.length === 0 && (
+            <GTORecommendation 
+              card1={playerHand[0]} 
+              card2={playerHand[1]} 
+              position={selectedPosition}
+              onPositionChange={setSelectedPosition}
+            />
+          )}
+
+          {/* Post-Flop: Hand Strength Analysis */}
+          {flop.length > 0 && (() => {
+            const allCommunityCards = [...flop, ...turn, ...river];
+            console.log('GameTable - Rendering PostFlopAnalysis', {
+              flopLength: flop.length,
+              turnLength: turn.length,
+              riverLength: river.length,
+              totalCommunity: allCommunityCards.length,
+              playerHandLength: playerHand.length
+            });
+            return (
+              <PostFlopAnalysis 
+                playerHand={playerHand}
+                communityCards={allCommunityCards}
+              />
+            );
+          })()}
           
-          {/* AI Advice */}
+          {/* AI Advice (always available) */}
           {(isAILoading || aiAdvice) && (
             <div className="p-4 rounded-lg bg-slate-700 text-white shadow-md border border-slate-600">
               <h3 className="text-white font-bold text-sm mb-2">AI Analysis</h3>
