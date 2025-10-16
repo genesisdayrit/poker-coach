@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import Card from './Card';
+import GTORecommendation from './GTORecommendation';
+import type { Position } from '../utils/gtoRanges';
 
 export default function GameTable() {
   const {
@@ -20,6 +22,7 @@ export default function GameTable() {
 
   const [aiAdvice, setAiAdvice] = useState('');
   const [isAILoading, setIsAILoading] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<Position>('BTN');
 
   // Clear advice on game state changes
   const handleDrawHandWithReset = () => {
@@ -158,15 +161,29 @@ export default function GameTable() {
         </button>
       </div>
 
-      {/* AI Advice section */}
-      {(isAILoading || aiAdvice) && (
-        <div className="w-full max-w-md p-4 rounded-lg bg-slate-700 text-white shadow-md">
-          <div className="text-center">
-            {aiAdvice}
-            {isAILoading && (
-              <span className="inline-block ml-1 animate-pulse">▋</span>
-            )}
-          </div>
+      {/* GTO + AI Advice section */}
+      {playerHand.length === 2 && (
+        <div className="w-full max-w-2xl space-y-4">
+          {/* GTO Recommendation */}
+          <GTORecommendation 
+            card1={playerHand[0]} 
+            card2={playerHand[1]} 
+            position={selectedPosition}
+            onPositionChange={setSelectedPosition}
+          />
+          
+          {/* AI Advice */}
+          {(isAILoading || aiAdvice) && (
+            <div className="p-4 rounded-lg bg-slate-700 text-white shadow-md border border-slate-600">
+              <h3 className="text-white font-bold text-sm mb-2">AI Analysis</h3>
+              <div className="text-gray-200">
+                {aiAdvice}
+                {isAILoading && (
+                  <span className="inline-block ml-1 animate-pulse">▋</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
