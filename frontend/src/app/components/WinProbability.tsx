@@ -30,12 +30,21 @@ export default function WinProbability({
     let cancelled = false;
 
     const calculateProbability = async () => {
+      // Clear old probability immediately when cards change
+      setProbability(null);
+      
       if (playerHand.length !== 2) {
-        setProbability(null);
+        setIsCalculating(false);
         return;
       }
 
+      // Set calculating flag immediately so UI shows "Calculating..." not "Waiting for cards..."
       setIsCalculating(true);
+
+      // IMPORTANT: Wait for next frame to let cards render first
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (cancelled) return;
       
       try {
         // Run async calculation
@@ -63,18 +72,18 @@ export default function WinProbability({
 
     calculateProbability();
 
-    // Cleanup function to prevent state updates after unmount
+    // Cleanup function to cancel calculation when cards change
     return () => {
       cancelled = true;
     };
   }, [playerHand, communityCards, opponentCount]);
 
-  if (!probability || isCalculating) {
+  if (!probability) {
     return (
       <div className="p-4 rounded-lg bg-slate-700 text-white shadow-md border border-slate-600">
-        <h3 className="text-white font-bold text-sm mb-2">Win Probability</h3>
+        <h3 className="text-white font-bold text-sm mb-2">Equity vs Random Opponent</h3>
         <div className="text-gray-400 text-sm">
-          {isCalculating ? 'Calculating...' : 'No data'}
+          {isCalculating ? 'Calculating...' : 'Waiting for cards...'}
         </div>
       </div>
     );
@@ -94,7 +103,10 @@ export default function WinProbability({
   return (
     <div className="p-4 rounded-lg bg-slate-700 text-white shadow-md border border-slate-600">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-white font-bold text-sm">Equity vs Random Opponent</h3>
+        <h3 className="text-white font-bold text-sm">
+          Equity vs Random Opponent
+          {isCalculating && <span className="ml-2 text-xs text-yellow-400 animate-pulse">updating...</span>}
+        </h3>
         <span className="text-xs text-gray-400">50 samples</span>
       </div>
 
