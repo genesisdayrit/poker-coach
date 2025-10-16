@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { evaluateHandStrength, getStrengthColor, getHandEmoji, getBasicAdvice, type HandStrength } from '../utils/handEvaluator';
+import { calculateOuts, getDrawStrength, getDrawColor, type OutsAnalysis } from '../utils/drawDetector';
 
 interface PostFlopAnalysisProps {
   playerHand: Array<{ value: string; suit: 'hearts' | 'diamonds' | 'clubs' | 'spades' }>;
@@ -8,20 +9,17 @@ interface PostFlopAnalysisProps {
 }
 
 export default function PostFlopAnalysis({ playerHand, communityCards }: PostFlopAnalysisProps) {
-  // Debug logging
-  console.log('PostFlopAnalysis - playerHand:', playerHand.length, 'communityCards:', communityCards.length);
-  
   // Don't show if not enough cards
   if (playerHand.length !== 2 || communityCards.length < 3) {
-    console.log('Not enough cards to show analysis');
     return null;
   }
 
   let handStrength: HandStrength;
+  let outsAnalysis: OutsAnalysis;
   
   try {
     handStrength = evaluateHandStrength(playerHand, communityCards);
-    console.log('Hand evaluated:', handStrength);
+    outsAnalysis = calculateOuts(playerHand, communityCards);
   } catch (error) {
     console.error('Error evaluating hand:', error);
     // Show error state instead of returning null
@@ -35,6 +33,8 @@ export default function PostFlopAnalysis({ playerHand, communityCards }: PostFlo
 
   const emoji = getHandEmoji(handStrength.name);
   const advice = getBasicAdvice(handStrength);
+  const drawStrength = getDrawStrength(outsAnalysis.oneCardEquity);
+  const hasDraws = outsAnalysis.draws.length > 0;
 
   return (
     <div className="w-full max-w-2xl p-4 rounded-lg bg-slate-700 shadow-md border border-slate-600">
@@ -121,10 +121,87 @@ export default function PostFlopAnalysis({ playerHand, communityCards }: PostFlo
           <span>Royal Flush</span>
         </div>
 
+        {/* Outs Calculator */}
+        {hasDraws && (
+          <div className="pt-3 border-t border-slate-600">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-yellow-400 font-bold text-sm">🎯 Outs Calculator</p>
+              <div className={`px-2 py-1 rounded text-xs font-semibold ${getDrawColor(drawStrength)}`}>
+                {drawStrength.replace('-', ' ').toUpperCase()}
+              </div>
+            </div>
+
+            {/* Draws List */}
+            <div className="space-y-1 mb-3">
+              {outsAnalysis.draws.map((draw, idx) => (
+                <div key={idx} className="flex justify-between items-center text-sm bg-slate-800 rounded px-2 py-1">
+                  <span className="text-gray-300">
+                    {draw.type === 'flush-draw' && '💧 '}
+                    {draw.type === 'straight-draw' && '📈 '}
+                    {draw.type === 'gutshot' && '🎯 '}
+                    {draw.type === 'overcard' && '⬆️ '}
+                    {draw.description}
+                  </span>
+                  <span className="text-white font-bold">{draw.outs} outs</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Outs Breakdown */}
+            <div className="bg-slate-800 rounded p-2 mb-2">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-400">Total Outs</span>
+                <span className="text-white font-bold">{outsAnalysis.cleanOuts} clean outs</span>
+              </div>
+              {outsAnalysis.breakdown.slice(0, 3).map((item, idx) => (
+                <div key={idx} className="text-xs text-gray-400">
+                  • {item}
+                </div>
+              ))}
+            </div>
+
+            {/* Equity Display */}
+            <div className="space-y-2">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-400">Next Card Equity</span>
+                  <span className="text-white font-bold">~{outsAnalysis.oneCardEquity}%</span>
+                </div>
+                <div className="bg-slate-600 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-yellow-500 to-green-500 transition-all"
+                    style={{ width: `${outsAnalysis.oneCardEquity}%` }}
+                  />
+                </div>
+              </div>
+
+              {communityCards.length === 3 && (
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-400">By River (both cards)</span>
+                    <span className="text-white font-bold">~{outsAnalysis.riverEquity}%</span>
+                  </div>
+                  <div className="bg-slate-600 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all"
+                      style={{ width: `${outsAnalysis.riverEquity}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Advice */}
         <div className="pt-3 border-t border-slate-600">
           <p className="text-gray-400 text-xs mb-1">Basic Strategy</p>
-          <p className="text-white font-medium">{advice}</p>
+          <p className="text-white font-medium">
+            {hasDraws && outsAnalysis.oneCardEquity > 25 
+              ? `${advice} You have a ${drawStrength.replace('-', ' ')} with ${outsAnalysis.cleanOuts} outs.`
+              : advice
+            }
+          </p>
         </div>
 
         {/* Quick Stats */}
@@ -137,6 +214,12 @@ export default function PostFlopAnalysis({ playerHand, communityCards }: PostFlo
             <p className="text-gray-400">Category</p>
             <p className="text-white font-bold capitalize">{handStrength.strength}</p>
           </div>
+          {hasDraws && (
+            <div className="flex-1 bg-slate-800 rounded p-2">
+              <p className="text-gray-400">Outs</p>
+              <p className="text-yellow-400 font-bold">{outsAnalysis.cleanOuts}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

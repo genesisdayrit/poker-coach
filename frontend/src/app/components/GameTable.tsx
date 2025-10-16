@@ -176,22 +176,12 @@ export default function GameTable() {
           )}
 
           {/* Post-Flop: Hand Strength Analysis */}
-          {flop.length > 0 && (() => {
-            const allCommunityCards = [...flop, ...turn, ...river];
-            console.log('GameTable - Rendering PostFlopAnalysis', {
-              flopLength: flop.length,
-              turnLength: turn.length,
-              riverLength: river.length,
-              totalCommunity: allCommunityCards.length,
-              playerHandLength: playerHand.length
-            });
-            return (
-              <PostFlopAnalysis 
-                playerHand={playerHand}
-                communityCards={allCommunityCards}
-              />
-            );
-          })()}
+          {flop.length > 0 && (
+            <PostFlopAnalysis 
+              playerHand={playerHand}
+              communityCards={[...flop, ...turn, ...river]}
+            />
+          )}
           
           {/* AI Advice (always available) */}
           {(isAILoading || aiAdvice) && (
