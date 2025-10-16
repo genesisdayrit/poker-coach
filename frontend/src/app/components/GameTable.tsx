@@ -4,6 +4,7 @@ import { useGame } from '../contexts/GameContext';
 import Card from './Card';
 import GTORecommendation from './GTORecommendation';
 import PostFlopAnalysis from './PostFlopAnalysis';
+import WinProbability from './WinProbability';
 import type { Position } from '../utils/gtoRanges';
 
 export default function GameTable() {
@@ -182,6 +183,13 @@ export default function GameTable() {
               communityCards={[...flop, ...turn, ...river]}
             />
           )}
+
+          {/* Win Probability (shown at all stages) */}
+          <WinProbability 
+            playerHand={playerHand}
+            communityCards={[...flop, ...turn, ...river]}
+            opponentCount={1}
+          />
           
           {/* AI Advice (always available) */}
           {(isAILoading || aiAdvice) && (
