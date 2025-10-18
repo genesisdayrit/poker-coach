@@ -4,7 +4,8 @@ import {
   calculateWinProbability, 
   getWinProbabilityColor,
   getEquityStrength,
-  type WinProbability as WinProbabilityType 
+  type WinProbability as WinProbabilityType,
+  type ProgressCallback
 } from '../utils/winProbability';
 
 type Card = {
@@ -25,6 +26,7 @@ export default function WinProbability({
 }: WinProbabilityProps) {
   const [probability, setProbability] = useState<WinProbabilityType | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [progress, setProgress] = useState({ completed: 0, total: 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -32,6 +34,7 @@ export default function WinProbability({
     const calculateProbability = async () => {
       // Clear old probability immediately when cards change
       setProbability(null);
+      setProgress({ completed: 0, total: 0 });
       
       if (playerHand.length !== 2) {
         setIsCalculating(false);
@@ -47,11 +50,20 @@ export default function WinProbability({
       if (cancelled) return;
       
       try {
-        // Run async calculation
+        // Progress callback to update UI
+        const onProgress: ProgressCallback = (completed, total) => {
+          if (!cancelled) {
+            setProgress({ completed, total });
+          }
+        };
+
+        // Run async calculation with progress tracking
         const result = await calculateWinProbability(
           playerHand,
           communityCards,
-          opponentCount
+          opponentCount,
+          50, // samples
+          onProgress
         );
         
         // Only update state if component is still mounted and calculation wasn't cancelled
@@ -84,9 +96,34 @@ export default function WinProbability({
         <h3 className="text-white font-bold text-sm mb-2">
           Equity vs {opponentCount} {opponentCount === 1 ? 'Opponent' : 'Opponents'}
         </h3>
-        <div className="text-gray-400 text-sm">
-          {isCalculating ? 'Calculating...' : 'Waiting for cards...'}
-        </div>
+        {isCalculating ? (
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300 text-sm">Simulating scenarios...</span>
+              <span className="text-blue-400 text-sm font-semibold">
+                {progress.completed}/{progress.total}
+              </span>
+            </div>
+            
+            {/* Animated progress bar */}
+            <div className="h-2 bg-gray-600 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-200 ease-linear"
+                style={{ 
+                  width: progress.total > 0 ? `${(progress.completed / progress.total) * 100}%` : '0%' 
+                }}
+              />
+            </div>
+            
+            <div className="text-xs text-gray-400">
+              Running Monte Carlo simulation
+            </div>
+          </div>
+        ) : (
+          <div className="text-gray-400 text-sm">
+            Waiting for cards...
+          </div>
+        )}
       </div>
     );
   }
