@@ -61,6 +61,10 @@ function shuffle<T>(array: T[]): T[] {
   return arr;
 }
 
+export interface ProgressCallback {
+  (completed: number, total: number): void;
+}
+
 /**
  * Calculate win probability against a representative sample of opponent hands (ASYNC)
  * Uses strategic sampling for WSOP-style accuracy with better performance
@@ -68,13 +72,15 @@ function shuffle<T>(array: T[]): T[] {
  * @param communityCards - Board cards (can be empty, flop, or turn)
  * @param opponentCount - Number of opponents (default: 1)
  * @param samples - Number of opponent hands to sample (default: 50 for speed)
+ * @param onProgress - Optional callback to report progress (completed, total)
  * @returns Promise with win probability breakdown
  */
 export async function calculateWinProbability(
   holeCards: Card[],
   communityCards: Card[],
   opponentCount: number = 1,
-  samples: number = 50
+  samples: number = 50,
+  onProgress?: ProgressCallback
 ): Promise<WinProbability> {
   if (holeCards.length !== 2) {
     throw new Error('Must have exactly 2 hole cards');
@@ -97,9 +103,16 @@ export async function calculateWinProbability(
   // Sample opponent hands strategically
   const opponentHandSets = sampleMultipleOpponentHands(availableCards, samples, opponentCount);
 
+  // Report initial progress
+  if (onProgress) {
+    onProgress(0, opponentHandSets.length);
+  }
+
   // Calculate equity against each sampled set of opponent hands
   // Process in batches to avoid blocking UI
   const batchSize = 10;
+  let completedSamples = 0;
+  
   for (let i = 0; i < opponentHandSets.length; i += batchSize) {
     // Yield to browser after each batch
     if (i > 0) {
@@ -142,6 +155,12 @@ export async function calculateWinProbability(
       sumWinPct += winPct;
       sumTiePct += tiePct;
       sumLossPct += lossPct;
+      
+      // Report progress after EACH sample completes (fluid updates)
+      completedSamples++;
+      if (onProgress) {
+        onProgress(completedSamples, opponentHandSets.length);
+      }
     }
   }
 
