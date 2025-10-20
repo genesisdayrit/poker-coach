@@ -40,7 +40,7 @@ export default function GTORecommendation({ card1, card2, position, onPositionCh
     <div className="w-full max-w-2xl p-4 rounded-lg bg-slate-700 shadow-md border border-slate-600">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-white font-bold text-lg">GTO Recommendation</h3>
+        <h3 className="text-white font-bold text-lg">Pre Flop: GTO Recommendation</h3>
         
         {/* Position Selector */}
         <div className="flex items-center gap-2">
